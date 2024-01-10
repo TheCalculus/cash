@@ -22,26 +22,24 @@ char** cash_parse(char* input, size_t buffsiz) {
 
     for (int i = 0; i < buffsiz; i++) {
         char ch = input[i];
-        while (isspace(ch)) ch = input[++i];
+        while (isspace(ch) || !isprint(ch)) ch = input[++i];
 
-        arguments[argc] = (char*)malloc(100); // a maximum single token size of 100
-                                              // should be more than enough
+        arguments[argc] = (char*)malloc(100);
 
         size_t j = 0;
-
         while (!isspace(ch)) { 
             arguments[argc][j++] = ch;
             ch = input[++i];
         }
 
-        arguments[argc] = (char*)realloc(arguments[argc], j + 1);
+        arguments[argc][j] = '\0';
         argc++;
     }
 
     /* TODO: remove this free */
     for (int i = 0; i < argc - 1; i++) {
         printf("$%d = %s\n", i, arguments[i]);
-        free(arguments[i]);
+        /* free(arguments[i]); */
     }
 
     return arguments;
@@ -52,16 +50,18 @@ size_t cash_execv(char** command) {
 }
 
 char* cash_input(size_t* buffsiz) {
-    char* input;
+    char* input = NULL;
 
-    if(getline(&input, buffsiz, stdin) == -1)
+    if(getline(&input, buffsiz, stdin) == -1) {
+        free(input);
         CASH_THROW("getline");
+    }
 
     return input;
 }
 
 void cash_main() {
-    int RUNNING = 1;
+    int RUNNING = 5;
 
     char*  input;
     char** command;
