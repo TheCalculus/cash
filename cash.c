@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <errno.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -30,10 +31,11 @@ size_t cash_execv(char** command, size_t argc) {
 
         free(result);
     } else {
-        waitpid(pid, &retval, WNOHANG);
+        waitpid(pid, &retval, 0);
+        retval = WEXITSTATUS(retval);
         // child process complete
     }
-
+    
     return retval;
 }
 
@@ -120,9 +122,14 @@ void cash_main() {
             goto clean;
         }
 
-        cash_execv(command, argc);
+        size_t retval = cash_execv(command, argc);
+        
+        if (errno = ENOENT) {
+            // command not found by execvp
+            printf("command not found: %s\n", command[0]);
+        }
 
-        printf("command not found: %s\n", command[0]);
+        fflush(stdout);
 
 clean:
         for (size_t k = 0; k < argc; k++) {
